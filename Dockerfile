@@ -2,7 +2,7 @@
 # ETAPA 1: BUILD (Compilación)
 # ============================================
 
-FROM maven:3.9-eclipse-temurin-17-alpine AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /habit-tracker
 
 COPY pom.xml .
@@ -17,7 +17,7 @@ RUN mvn clean package -DskipTests
 
 #ETAPA 2: RUNTIME
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /habit-tracker
 
 COPY --from=build /habit-tracker/target/*.jar habit-tracker.jar
