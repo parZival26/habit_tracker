@@ -1,0 +1,54 @@
+version: '3.8' #version de docker-compose
+
+
+services: #Lista de contenedores (cada servicio un contenedor)
+
+#SERVICIO POSTGRESQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: habittracker-postgres
+    environment: #Variables de entorno
+        POSTGRES_DB: habittracker
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432" #PUERTO_PC:PUERTO_CONTENEDOR
+    volumes: #Guarda datos fuera del contenedor por si se borra el contenedor o apagas
+      - postgres_data:/var/lib/postgresql/data
+    networks: #Red virtual donde los contenedores se comunican
+      - habittracker-network
+    healthcheck: #Verificar que postgre este listo para conectar
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 10s #verifica
+        timeout: 5s #espera
+        retries: 5 #intentos
+
+
+  #SERVICIO API SPRING BOOT
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: habittracker-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/habittracker
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres123
+    ports:
+      - "8080:8080"
+    networks:
+      - habittracker-network
+    restart: always
+
+# Definición de volúmenes
+volumes:
+  postgres_data:
+    # Docker maneja el almacenamiento automáticamente
+
+# Definición de redes
+networks:
+  habittracker-network:
+    driver: bridge
